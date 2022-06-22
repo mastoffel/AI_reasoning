@@ -13,6 +13,8 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import itertools
 
+from pyparsing import line
+
 # next event can be one of four options:
 # 1) new seed trait is introduced through novel invention with probability rho1
 # 2) two of the cultural traits present are combined to produce a new cultural trait with probability rho2
@@ -28,19 +30,12 @@ import itertools
 # if number of traits in the group falls to zero, the next event
 # is a new seed trait introduced through novel invention
 
-rho1 = 0.5
-rho2 = 0.1
-rho3 = 0.2
-rho4 = 1 - rho1 - rho2 - rho3
-
 # check intersection
 def has_intersection(a, b):
         return not set(a).isdisjoint(b)
     
-# run simulation
-
-
-def run_simulation(rho1, rho2, rho3, rho4, num_iter=100):
+# simulation
+def run_simulation(rho1, rho2, rho3, rho4, num_iter=1000):
     
     # make np array with 10 seed traits with names a-j
     seed_traits = np.array(['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j'])
@@ -96,8 +91,6 @@ def run_simulation(rho1, rho2, rho3, rho4, num_iter=100):
             culture_group = np.setdiff1d(culture_group, trait)
             culture_group_size -= 1
     return culture_group
-        
-culture_group
 
 # create pandas dataframe with combinations from 0.1 to 1 of rho1, rho2, rho3, rho4
 # and run simulation for each combination
@@ -125,19 +118,34 @@ for i in range(len(all_combinations_equal_1)):
     culture_group_list.append(sim)
     
 # make pandas DataFrame with and rhos
-simulation_df = pd.DataFrame(all_combinations_equal_1, columns=['rho1', 'rho2', 'rho3', 'rho4'])
-simulation_df
+sim_df = pd.DataFrame(all_combinations_equal_1, columns=['rho1', 'rho2', 'rho3', 'rho4'])
+sim_df
 
 # calculate cultural complexity from culture_group_list
 # measure 1: the number of traits per element
-number_of_traits = [len(sim) for sim in culture_group_list] 
+sim_df['trait_number'] = [len(sim) for sim in culture_group_list] 
 
 # measure 2: trait complexity: the mean length of traits in each culture_group
-def trait_complexity(culture_group):
+def get_trait_complexity(culture_group):
     if culture_group.size == 0: return 0
     traits = [len(trait) for trait in culture_group]
     return np.mean(traits)
-trait_complexity = list(map(trait_complexity, culture_group_list))
+sim_df['trait_complexity'] = list(map(get_trait_complexity, culture_group_list))
 
-# measure 3:
+# measure 3: number of lineages in each culture group
+# defined as starting with the same seed trait
+def get_lineage_number(culture_group):
+    if culture_group.size == 0: return 0
+    lineages = {trait[0] for trait in culture_group}
+    return len(lineages)
+sim_df['lineage_number'] = list(map(get_lineage_number, culture_group_list))
 
+# measure 4: mean lineage complexity
+def get_lineage_complexity(culture_group):
+    if culture_group.size == 0: return 0
+    lineage_complexity = [len(trait.replace('m', '')) for trait in culture_group]
+    return np.mean(lineage_complexity)
+sim_df['lineage_complexity'] = list(map(get_lineage_complexity, culture_group_list))
+
+# get mean traits and lineages for rho4_range in sim_df
+sim_df.groupby(['rho4']).agg('mean')
