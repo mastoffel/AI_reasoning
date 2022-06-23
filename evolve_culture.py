@@ -11,6 +11,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
 import itertools
+import math
 
 from operator import itemgetter
 from complexity_measures import get_complexity
@@ -33,6 +34,9 @@ from complexity_measures import get_complexity
 # check intersection
 def has_intersection(a, b):
         return not set(a).isdisjoint(b)
+    
+def sigmoid(x):
+      return 1 / (1 + math.exp(-x))
     
 # simulation 
 def run_simulation(rho1, rho2, rho3, num_iter=500):
@@ -137,11 +141,14 @@ def run_simulation(rho1, rho2, rho3, num_iter=500):
             # utilities for each trait in culture group
             trait_utils = [trait_utilities[trait] for trait in culture_group]
             # if trait is negative, set to 0
-            trait_utils = [trait if trait > 0 else 0 for trait in trait_utils]
+            #trait_utils = [trait if trait > 0 else 0.0001 for trait in trait_utils]
             # translate into relative probabilities
-            trait_probs = [trait_util/np.sum(trait_utils) for trait_util in trait_utils]
+            #trait_probs = [trait_util/np.sum(trait_utils) for trait_util in trait_utils]
+            # probabilty that trait is retained is inversely proportional to its utility
+            trait_probs = [sigmoid(trait_util) for trait_util in trait_utils]
             
-            # draw random trait from culture group
+            # draw trait to remove from culture group, with higher probability for
+            # lower utility traits
             trait = np.random.choice(culture_group, 1, replace=False, 
                                      p = trait_probs)
             
