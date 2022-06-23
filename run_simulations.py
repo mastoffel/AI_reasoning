@@ -1,71 +1,56 @@
+import itertools
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+from sklearn.decomposition import PCA
 
+from evolve_culture import run_simulation
 
-# create pandas dataframe with combinations from 0.1 to 1 of rho1, rho2, rho3, rho4
-# and run simulation for each combination
+# combinations from 0.1 to 1 of rho1, rho2, rho3, rho4
 rho1_range=rho2_range=rho3_range=rho4_range=np.arange(0.1, 1.1, 0.1)
         
 # create all combinations of rho1, rho2, rho3, rho4
-all_combs = np.array(list(itertools.product(rho1_range, rho2_range, 
+# make sure it's maximally one decimal place
+
+par_combs = np.array(list(itertools.product(rho1_range, rho2_range, 
                                             rho3_range, rho4_range)))        
 # get rows that are equal to 1
-all_combs_equal_1 = all_combs[all_combs[:,0] + all_combs[:,1] + \
-                              all_combs[:,2] + all_combs[:,3] == 1]
+par_combs_equal_1 = par_combs[par_combs[:,0] + par_combs[:,1] + \
+                              par_combs[:,2] + par_combs[:,3] == 1]
 
-# run simulation for each combination
-all_combs_mean = np.zeros(shape = (len(all_combs_equal_1), 5))
-for i in range(len(all_combs_equal_1)):
-    all_combs[i, :] = run_simulation(rho1 = all_combs_equal_1[i, 0],
-                                        rho2 = all_combs_equal_1[i, 1],
-                                        rho3 = all_combs_equal_1[i, 2],
-                                        rho4 = all_combs_equal_1[i, 3])
+# replicate each culture_group simulation 10 times
+all_pars = np.repeat(par_combs_equal_1, 10, axis=0)
+all_pars = all_pars.round(1)
+# run simulation for each combination to get cultural complexities
+cult_complex = np.zeros(shape = (len(all_pars), 5))
+for i in range(len(all_pars)):
+    cult_complex[i, :] = run_simulation(rho1 = all_pars[i, 0],
+                                        rho2 = all_pars[i, 1],
+                                        rho3 = all_pars[i, 2])
+
+# run a PCA on all_combs to get a composite measure of cultural complexity
+pca = PCA(n_components=3)
+pca.fit(cult_complex)
+all_combs_pca = pca.transform(cult_complex)
+# explained variance per pc in percent
+print(pca.explained_variance_ratio_)
+
+# combine all_pars, cult_complex and all_combs_pca into a dataframe
+df = pd.DataFrame(np.concatenate((all_pars, cult_complex, all_combs_pca), axis=1),
+                    columns=['rho1', 'rho2', 'rho3', 'rho4', 'c1', 'c2', 'c3', 'c4', 'c5', 'pc1', 'pc2', 'pc3'])
+# add grouping cult_complex to all_pars, every 10 rows is a new culture_group simulation
+df['culture_group'] = np.repeat(np.arange(0, len(all_pars), 10), 10)
 
 
-# run simulations for all combinations
-culture_group_list = []
-for i in range(len(all_combs_equal_1)):
-    # get rhos from first row, functional programming
-    rho1 = all_combs_equal_1[i,0]
-    rho2 = all_combs_equal_1[i,1]
-    rho3 = all_combs_equal_1[i,2]
-    rho4 = all_combs_equal_1[i,3]
+# multi-plot grid with boxplot for rho1, rho2, rho3, rho4 against pc1
+fig, ax = plt.subplots(2, 2, figsize=(10, 10))
+sns.boxplot(x = 'rho1', y='pc1', data=df, ax=ax[0, 0]).set(xlabel='novel invention rate')
+sns.boxplot(x='rho2', y='pc1', data=df, ax=ax[0, 1]).set(xlabel='combination rate')
+sns.boxplot(x='rho3', y='pc1', data=df, ax=ax[1, 0]).set(xlabel='modification rate')
+sns.boxplot(x='rho4', y='pc1', data=df, ax=ax[1, 1]).set(xlabel='loss rate')
+plt.show()
+
+
     
-    sim = run_simulation(rho1, rho2, rho3, rho4, num_iter=500)
-    culture_group_list.append(sim)
-    
-# make pandas DataFrame with and rhos
-sim_df = pd.DataFrame(all_combs_equal_1, columns=['rho1', 'rho2', 'rho3', 'rho4'])
 
-# calculate cultural complexity from culture_group_list
-# measure 1: the number of traits per element
-sim_df['trait_number'] = [len(sim) for sim in culture_group_list] 
-
-# measure 2: trait complexity: the mean length of traits in each culture_group
-def get_trait_complexity(culture_group):
-    if culture_group.size == 0: return 0
-    traits = [len(trait) for trait in culture_group]
-    return np.mean(traits)
-sim_df['trait_complexity'] = list(map(get_trait_complexity, culture_group_list))
-
-# measure 3: number of lineages in each culture group
-# defined as starting with the same seed trait
-def get_lineage_number(culture_group):
-    if culture_group.size == 0: return 0
-    lineages = {trait[0] for trait in culture_group}
-    return len(lineages)
-sim_df['lineage_number'] = list(map(get_lineage_number, culture_group_list))
-
-# measure 4: mean lineage complexity
-def get_lineage_complexity(culture_group):
-    if culture_group.size == 0: return 0
-    lineage_complexity = [len(trait.replace('m', '')) for trait in culture_group]
-    return np.mean(lineage_complexity)
-sim_df['lineage_complexity'] = list(map(get_lineage_complexity, culture_group_list))
-
-# Calculate PCA from trait_number, trait_complexity, lineage_number and linear_complexity
-# PCA is calculated using sklearn.decomposition.PCA
-# PCA is used to reduce the number of features to 1
-
-
-
-# get mean traits and lineages for rho4_range in sim_df
-sim_df.groupby(['rho4']).agg('mean')
