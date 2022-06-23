@@ -7,14 +7,13 @@
 # 3) modification rate
 # 4) combination rate
 
-from cmath import e
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
 import itertools
-from operator import itemgetter
 
-from pyparsing import line
+from operator import itemgetter
+from complexity_measures import get_complexity
 
 # next event can be one of four options:
 # 1) new seed trait is introduced through novel invention with probability rho1
@@ -35,9 +34,24 @@ from pyparsing import line
 def has_intersection(a, b):
         return not set(a).isdisjoint(b)
     
-# simulation
-def run_simulation(rho1, rho2, rho3, rho4, num_iter=1000):
+# simulation 
+def run_simulation(rho1, rho2, rho3, num_iter=500):
+    """Cultural evolution simulation. Starts with two (out of ten) seed traits, allows
+    new traits to be introduced through novel invention (rho1), combination 
+    of existing traits (rho2), and modification of existing traits (rho3). The
+    loss rate or transmission fidelity (rho4) is assumed to be 1 - (rho1 + rho2 + rho3).
     
+
+    Args:
+        rho1 (_type_): probability of introducing a new seed trait through novel invention
+        rho2 (_type_): probability of combining two existing traits to produce a new trait
+        rho3 (_type_): probability of modifying an existing trait to produce a new variant
+        num_iter (int, optional): Iterations. The last 20% are averaged over
+        to calculate complexity. Defaults to 500.
+
+    Returns:
+        np.array: mean of 5 complexity measures over the last 20% of iterations.
+    """
     # make np array with 10 seed traits with names a-j
     seed_names = np.array(['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j'])
     
@@ -52,6 +66,9 @@ def run_simulation(rho1, rho2, rho3, rho4, num_iter=1000):
         
     # initialise culture group with two seed traits drawn at random
     culture_group = np.random.choice(seed_names, 2, replace=False)
+    
+    # inititalise array of complexities over time
+    cultural_complexity = np.zeros(shape = (round(0.2*num_iter), 5))
     
     for i in range(num_iter):
         
@@ -116,11 +133,11 @@ def run_simulation(rho1, rho2, rho3, rho4, num_iter=1000):
                                                     np.random.normal(0, 0.1)
             
         # 4) one of the cultural traits is lost
-        
         else:
             # utilities for each trait in culture group
             trait_utils = [trait_utilities[trait] for trait in culture_group]
-            
+            # if trait is negative, set to 0
+            trait_utils = [trait if trait > 0 else 0 for trait in trait_utils]
             # translate into relative probabilities
             trait_probs = [trait_util/np.sum(trait_utils) for trait_util in trait_utils]
             
@@ -130,66 +147,10 @@ def run_simulation(rho1, rho2, rho3, rho4, num_iter=1000):
             
             # remove trait
             culture_group = np.setdiff1d(culture_group, trait)
-       
-    return culture_group
 
-# create pandas dataframe with combinations from 0.1 to 1 of rho1, rho2, rho3, rho4
-# and run simulation for each combination
-rho1_range=rho2_range=rho3_range=rho4_range=np.arange(0.1, 1.1, 0.1)
-        
-# create all combinations of rho1, rho2, rho3, rho4
-all_combs = np.array(list(itertools.product(rho1_range, rho2_range, 
-                                            rho3_range, rho4_range)))        
-# get rows that are equal to 1
-all_combs_equal_1 = all_combs[all_combs[:,0] + all_combs[:,1] + \
-                              all_combs[:,2] + all_combs[:,3] == 1]
+        if i >= round(0.8*num_iter):
+            cultural_complexity[i-round(0.8*num_iter), :] = get_complexity(culture_group, trait_utilities)
 
-# run simulations for all combinations
-culture_group_list = []
-for i in range(len(all_combs_equal_1)):
-    # get rhos from first row, functional programming
-    rho1 = all_combs_equal_1[i,0]
-    rho2 = all_combs_equal_1[i,1]
-    rho3 = all_combs_equal_1[i,2]
-    rho4 = all_combs_equal_1[i,3]
-    
-    sim = run_simulation(rho1, rho2, rho3, rho4, num_iter=5)
-    culture_group_list.append(sim)
-    
-# make pandas DataFrame with and rhos
-sim_df = pd.DataFrame(all_combs_equal_1, columns=['rho1', 'rho2', 'rho3', 'rho4'])
-
-# calculate cultural complexity from culture_group_list
-# measure 1: the number of traits per element
-sim_df['trait_number'] = [len(sim) for sim in culture_group_list] 
-
-# measure 2: trait complexity: the mean length of traits in each culture_group
-def get_trait_complexity(culture_group):
-    if culture_group.size == 0: return 0
-    traits = [len(trait) for trait in culture_group]
-    return np.mean(traits)
-sim_df['trait_complexity'] = list(map(get_trait_complexity, culture_group_list))
-
-# measure 3: number of lineages in each culture group
-# defined as starting with the same seed trait
-def get_lineage_number(culture_group):
-    if culture_group.size == 0: return 0
-    lineages = {trait[0] for trait in culture_group}
-    return len(lineages)
-sim_df['lineage_number'] = list(map(get_lineage_number, culture_group_list))
-
-# measure 4: mean lineage complexity
-def get_lineage_complexity(culture_group):
-    if culture_group.size == 0: return 0
-    lineage_complexity = [len(trait.replace('m', '')) for trait in culture_group]
-    return np.mean(lineage_complexity)
-sim_df['lineage_complexity'] = list(map(get_lineage_complexity, culture_group_list))
-
-# Calculate PCA from trait_number, trait_complexity, lineage_number and linear_complexity
-# PCA is calculated using sklearn.decomposition.PCA
-# PCA is used to reduce the number of features to 1
-
-
-
-# get mean traits and lineages for rho4_range in sim_df
-sim_df.groupby(['rho4']).agg('mean')
+    # get mean for each column of cultural_complexity
+    cultural_complexity_mean = np.mean(cultural_complexity, axis=0)
+    return  cultural_complexity_mean
