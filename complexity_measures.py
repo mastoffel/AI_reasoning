@@ -53,11 +53,31 @@ def get_lineage_complexity(culture_group):
         culture_group (np.array): array with string for each trait.
 
     Returns:
-        float: Mean lineage length in culture group.
+        tuple: Mean and maximum lineage complexity in culture group.
     """
     if culture_group.size == 0: return 0
     lineage_complexity = [len(trait.replace('m', '')) for trait in culture_group]
-    return np.mean(lineage_complexity)
+    return np.mean(lineage_complexity), np.max(lineage_complexity)
+
+def get_number_of_seed_traits(culture_group):
+    """Calculates the mean number of seed traits in a culture group.
+
+    Args:
+        culture_group (np.array): array with string for each trait.
+
+    Returns:
+        float: Number of seed traits in culture group.
+    """
+    if culture_group.size == 0: return 0
+    seed_names = np.array(['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j'])
+    # check how many seed traits in culture group, including partial matching
+    # combine culture_group into one string and check how many unique letters
+    # without m
+    culture_group_string = ''.join(culture_group).replace('m', '')
+    # string to set
+    culture_group_set = set(culture_group_string)
+    # count size of set
+    return len(culture_group_set)
 
 def get_maximum_utility(culture_group, trait_utilities):
     """Calculates the maximum utility of a culture group.
@@ -71,6 +91,8 @@ def get_maximum_utility(culture_group, trait_utilities):
     if culture_group.size == 0: return 0
     utilities = [trait_utilities[trait] for trait in culture_group]
     return max(trait_utilities.values())
+
+
 
 def get_complexity(culture_group, trait_utilities):
     """Calculates the cultural complexity of a culture group.
@@ -86,8 +108,8 @@ def get_complexity(culture_group, trait_utilities):
     trait_number = get_trait_number(culture_group)
     trait_complexity = get_trait_complexity(culture_group)
     lineage_number = get_lineage_number(culture_group)
-    lineage_complexity = get_lineage_complexity(culture_group)
+    lineage_complexity_mean, lineage_complexity_max = get_lineage_complexity(culture_group)
     maximum_utility = get_maximum_utility(culture_group, trait_utilities)
     # combine into numpy array
     return np.array([trait_number, trait_complexity, lineage_number, 
-                     lineage_complexity, maximum_utility])
+                     lineage_complexity_mean, lineage_complexity_max, maximum_utility])

@@ -138,22 +138,29 @@ def run_simulation(rho1, rho2, rho3, num_iter=500):
             
         # 4) one of the cultural traits is lost
         else:
-            # utilities for each trait in culture group
-            trait_utils = [trait_utilities[trait] for trait in culture_group]
-            # if trait is negative, set to 0
-            #trait_utils = [trait if trait > 0 else 0.0001 for trait in trait_utils]
-            # translate into relative probabilities
-            #trait_probs = [trait_util/np.sum(trait_utils) for trait_util in trait_utils]
-            # probabilty that trait is retained is inversely proportional to its utility
-            trait_probs = [sigmoid(trait_util) for trait_util in trait_utils]
+            if len(culture_group) > 1:
+                
+                # utilities for each trait in culture group
+                trait_utils = [trait_utilities[trait] for trait in culture_group]
+                # set negative utilities to 0
+                trait_utils = [trait if trait > 0 else 0 for trait in trait_utils]
+                # set probabilities summing to 1
+                trait_probs = [1-(trait/sum(trait_utils)) for trait in trait_utils]
+                trait_probs /= sum(trait_probs)
             
-            # draw trait to remove from culture group, with higher probability for
-            # lower utility traits
-            trait = np.random.choice(culture_group, 1, replace=False, 
-                                     p = trait_probs)
-            
-            # remove trait
-            culture_group = np.setdiff1d(culture_group, trait)
+                # try random choice and catch error
+                try:
+                    trait_to_remove = np.random.choice(culture_group, 1, p=trait_probs)[0]
+                except ValueError:
+                    print(culture_group, trait_probs, trait_utils)
+                    # if error, repeat iteration
+                    i = i-1
+                    continue
+                
+                # remove trait
+                culture_group = np.setdiff1d(culture_group, trait_to_remove)
+            else:
+                culture_group = np.setdiff1d(culture_group, culture_group[0])
 
         if i >= round(0.8*num_iter):
             cultural_complexity[i-round(0.8*num_iter), :] = get_complexity(culture_group, trait_utilities)

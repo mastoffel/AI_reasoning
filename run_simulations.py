@@ -22,6 +22,7 @@ par_combs_equal_1 = par_combs[par_combs[:,0] + par_combs[:,1] + \
 # replicate each culture_group simulation 10 times
 all_pars = np.repeat(par_combs_equal_1, 10, axis=0)
 all_pars = all_pars.round(1)
+
 # run simulation for each combination to get cultural complexities
 cult_complex = np.zeros(shape = (len(all_pars), 5))
 for i in range(len(all_pars)):
