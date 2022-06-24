@@ -55,9 +55,22 @@ def get_lineage_complexity(culture_group):
     Returns:
         tuple: Mean and maximum lineage complexity in culture group.
     """
-    if culture_group.size == 0: return 0
+    if culture_group.size == 0: return 0, 0
     lineage_complexity = [len(trait.replace('m', '')) for trait in culture_group]
     return np.mean(lineage_complexity), np.max(lineage_complexity)
+
+def get_number_of_modifications(culture_group):
+    """Calculates the number of modifications in a culture group.
+
+    Args:
+        culture_group (np.array): array with string for each trait.
+
+    Returns:
+        int: number of modifications per trait in culture group
+    """
+    if culture_group.size == 0: return 0
+    # count m's and divide by number of traits
+    return np.sum([trait.count('m') for trait in culture_group]) / len(culture_group)
 
 def get_number_of_seed_traits(culture_group):
     """Calculates the mean number of seed traits in a culture group.
@@ -79,20 +92,19 @@ def get_number_of_seed_traits(culture_group):
     # count size of set
     return len(culture_group_set)
 
-def get_maximum_utility(culture_group, trait_utilities):
-    """Calculates the maximum utility of a culture group.
+def get_utility(culture_group, trait_utilities):
+    """Calculates summary stats of the utility of traits a culture group.
 
     Args:
        trait_utilities (dict): Mapping of trait to utility.
 
     Returns:
-        float: Maximum utility of culture group.
+        tuple: Maximum utility of culture group, minimum utility of culture group,
+        and mean utility of culture group.
     """
-    if culture_group.size == 0: return 0
+    if culture_group.size == 0: return 0, 0, 0
     utilities = [trait_utilities[trait] for trait in culture_group]
-    return max(trait_utilities.values())
-
-
+    return max(utilities), min(utilities), np.mean(utilities)
 
 def get_complexity(culture_group, trait_utilities):
     """Calculates the cultural complexity of a culture group.
@@ -101,15 +113,20 @@ def get_complexity(culture_group, trait_utilities):
         culture_group (np.array): array with string for each trait.
         trait_utilities (dict): Mapping of trait to utility.
     Returns:
-        numpy array: five measures of cultural complexity of culture group:
-        trait_number, trait_complexity, lineage_number, 
-        lineage_complexity, maximum_utility.
+        numpy array: trait_number, trait_complexity, lineage_number,    
+        lineage_complexity_mean, lineage_complexity_max, seed_trait_number,
+        modifications, maximum_utility, minimum_utility, mean_utility.            
     """
     trait_number = get_trait_number(culture_group)
     trait_complexity = get_trait_complexity(culture_group)
     lineage_number = get_lineage_number(culture_group)
     lineage_complexity_mean, lineage_complexity_max = get_lineage_complexity(culture_group)
-    maximum_utility = get_maximum_utility(culture_group, trait_utilities)
+    seed_trait_number = get_number_of_seed_traits(culture_group)
+    modifications = get_number_of_modifications(culture_group)
+    maximum_utility, minimum_utility, mean_utility = get_utility(culture_group, trait_utilities)
+    
     # combine into numpy array
     return np.array([trait_number, trait_complexity, lineage_number, 
-                     lineage_complexity_mean, lineage_complexity_max, maximum_utility])
+                     lineage_complexity_mean, lineage_complexity_max, 
+                     seed_trait_number, modifications,
+                     maximum_utility, minimum_utility, mean_utility])

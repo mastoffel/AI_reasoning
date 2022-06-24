@@ -72,7 +72,7 @@ def run_simulation(rho1, rho2, rho3, num_iter=500):
     culture_group = np.random.choice(seed_names, 2, replace=False)
     
     # inititalise array of complexities over time
-    cultural_complexity = np.zeros(shape = (round(0.2*num_iter), 5))
+    cultural_complexity = np.zeros(shape = (round(0.2*num_iter), 10))
     
     for i in range(num_iter):
         
