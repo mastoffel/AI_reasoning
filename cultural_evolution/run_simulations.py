@@ -33,7 +33,7 @@ for i in tqdm(range(len(all_pars))):
                                         num_iter=1000)
 
 # save cult_complex as txt file
-np.savetxt('cult_complex.txt', cult_complex)
+np.savetxt('cultural_evolution/output/cult_complex.txt', cult_complex)
 
 # load cult_complex from txt file
 cult_complex = np.loadtxt('cultural_evolution/output/cult_complex.txt')
