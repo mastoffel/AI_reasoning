@@ -14,7 +14,7 @@ import itertools
 import math
 
 from operator import itemgetter
-from complexity_measures import get_complexity
+from cultural_evolution.complexity_measures import get_complexity
 
 # next event can be one of four options:
 # 1) new seed trait is introduced through novel invention with probability rho1
@@ -56,12 +56,14 @@ def run_simulation(rho1, rho2, rho3, num_iter=500):
     Returns:
         np.array: mean of 5 complexity measures over the last 20% of iterations.
     """
-    # make np array with 10 seed traits with names a-j
-    seed_names = np.array(['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j'])
+    # make np array containing the 20 first letters of the alphabet
+    # these are the seed traits
+    num_seeds = 10
+    seed_names = np.array(list(map(chr, range(97, 97 + num_seeds))))
     
     # give each seed_trait a utility value drawn from a random uniform distribution
     # betwee 0.75 and 1. 
-    seed_utilities = np.random.uniform(size=10, low=0.75, high=1.)
+    seed_utilities = np.random.uniform(size=num_seeds, low=0.75, high=1.)
     
     # combine seed names and their utilities. 
     trait_utilities = {}
@@ -78,8 +80,10 @@ def run_simulation(rho1, rho2, rho3, num_iter=500):
         
         # draw random number between 0 and 1
         r = np.random.random()
+        
         # 1) new seed trait is introduced (necessary if there are no traits)
         if r < rho1 or len(culture_group) == 0:
+            
             # check which seed traits are not in group 
             seed_traits_not_in_group = np.setdiff1d(seed_names, culture_group)
             
@@ -165,6 +169,11 @@ def run_simulation(rho1, rho2, rho3, num_iter=500):
         if i >= round(0.8*num_iter):
             cultural_complexity[i-round(0.8*num_iter), :] = get_complexity(culture_group, trait_utilities)
 
-    # get mean for each column of cultural_complexity
-    cultural_complexity_mean = np.mean(cultural_complexity, axis=0)
-    return  cultural_complexity_mean
+    # get mean, min and max for each column of cultural_complexity 
+    cc_mean = np.mean(cultural_complexity, axis=0)
+    min_traits = np.min(cultural_complexity[0], axis=0)
+    min_lineages = np.min(cultural_complexity[2], axis=0)
+    max_traits = np.max(cultural_complexity[0], axis=0)
+    max_lineages = np.max(cultural_complexity[2], axis=0)
+
+    return np.append(cc_mean, [min_traits, min_lineages, max_traits, max_lineages])

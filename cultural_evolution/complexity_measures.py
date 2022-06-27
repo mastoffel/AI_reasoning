@@ -1,5 +1,6 @@
 # measures of cultural complexity
 
+from calendar import c
 import numpy as np
 import pandas as pd
 
@@ -47,7 +48,7 @@ def get_lineage_number(culture_group):
 
 # measure 4: mean lineage complexity
 def get_lineage_complexity(culture_group):
-    """Calculates the mean length of lineages in a culture group.
+    """Number of seed traits required to make up a lineage.
 
     Args:
         culture_group (np.array): array with string for each trait.
@@ -79,18 +80,20 @@ def get_number_of_seed_traits(culture_group):
         culture_group (np.array): array with string for each trait.
 
     Returns:
-        float: Number of seed traits in culture group.
+        float: Mean number of seed traits in culture group.
     """
     if culture_group.size == 0: return 0
-    seed_names = np.array(['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j'])
+    
     # check how many seed traits in culture group, including partial matching
     # combine culture_group into one string and check how many unique letters
     # without m
     culture_group_string = ''.join(culture_group).replace('m', '')
+    
     # string to set
     culture_group_set = set(culture_group_string)
+    
     # count size of set
-    return len(culture_group_set)
+    return len(culture_group_set) / len(culture_group)
 
 def get_utility(culture_group, trait_utilities):
     """Calculates summary stats of the utility of traits a culture group.
