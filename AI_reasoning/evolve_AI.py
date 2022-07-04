@@ -159,14 +159,22 @@ def run_simulation(rho1, rho2, rho3, judge, num_iter=500):
         # utility of the traits in ai?
         
         # how good is the ai at evaluation? add noise from 0-0.1
-        judgement_error = np.random.normal(0, 1-judge) / 10
+        judgement_error = np.random.normal(0, 0.5 * (1-judge)) 
         
         # average utility of existing traits
         mean_utility = np.mean(itemgetter(*ai)(trait_utilities)) 
         
         # add trait if better than mean utility
-        if (trait_utilities[new_trait] + judgement_error) >= mean_utility:
-            ai = np.append(ai, new_trait)
+        if (trait_utilities[new_trait]) >= mean_utility:
+            # chance that new trait is added to ai is judge
+            if np.random.random() < judge:
+                ai = np.append(ai, new_trait)
+    
+         # if trait is worse than mean utility
+        else:
+            # chance that new trait is added to ai 
+            if np.random.random() > judge:
+                ai = np.append(ai, new_trait)
             
         # add to cultural_complexity over time
         ai_complexity[i, :] = get_complexity(ai, trait_utilities)

@@ -3,6 +3,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
+from sklearn.decomposition import PCA
 from tqdm import tqdm
 from AI_reasoning.evolve_AI import run_simulation    
 
@@ -30,7 +31,7 @@ all_pars = np.concatenate((all_pars, np.tile(np.arange(0, 10, 1), 10).reshape(-1
 
 # run simulation for each combination to get cultural complexities
 # 10 complexity measures are calculated
-num_iter = 100
+num_iter = 300
 ai_complex = np.zeros(shape = (num_iter * len(all_pars), 10 + all_pars.shape[1] + 1))
 
 for i in tqdm(range(len(all_pars))):
@@ -55,15 +56,16 @@ for i in tqdm(range(len(all_pars))):
 ai_complex_df = pd.DataFrame(ai_complex, columns=['rho1', 'rho2', 'rho3', 'judge', 
                                                   'sim', 'iter', 'c1', 'c2', 'c3', 'c4', 'c5',
                                                   'c6', 'c7', 'c8', 'c9', 'c10'])
-# filter judge = 0.8
-#ai_complex_df = ai_complex_df[ai_complex_df['judge'] == 0.8]
 
 # lineplot for iter vs. c10, hue = sim and facetgrid by judge
 g = sns.FacetGrid(ai_complex_df, col="judge", hue="sim", col_wrap=4,
                     sharex=False, sharey=True, size=5, aspect=1.5)
-g.map(plt.plot, "iter", "c10")
+# lineplot for iter vs. c10 for each judge
+g.map(sns.lineplot, "iter", "c8")
 g.add_legend()
-plt.show()
+
+# save plot to file
+plt.savefig('AI_reasoning/figs/c4_iter_hue_sim_judge4.png')
 
 
 
