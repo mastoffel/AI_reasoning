@@ -11,7 +11,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
-import itertools
 import math
 
 from operator import itemgetter
@@ -81,7 +80,7 @@ def run_simulation(rho1, rho2, rho3, judge, num_iter=500):
     ai = np.random.choice(seed_names, 2, replace=False)
     
     # inititalise array of complexities over time
-    cultural_complexity = np.zeros(shape = (num_iter, 10))
+    ai_complexity = np.zeros(shape = (num_iter, 10))
     
     i = 0
     while i < num_iter:
@@ -101,10 +100,11 @@ def run_simulation(rho1, rho2, rho3, judge, num_iter=500):
             
             # otherwise take a random seed trait to add to culture group
             new_trait = np.random.choice(seed_traits_not_in_group, 
-                                                       1, replace=False)
+                                                       1, replace=False)[0]
             
         # 2) two of the cultural traits present are combined
         elif r < rho1 + rho2:
+            
             # draw two random traits from culture group
             trait_1 = np.random.choice(ai, 1, replace=False)
             
@@ -136,14 +136,23 @@ def run_simulation(rho1, rho2, rho3, judge, num_iter=500):
             
         # 3) one of the cultural traits is modified
         elif r < rho1 + rho2 + rho3:
-            # draw random trait from culture group
-            trait = np.random.choice(ai, 1, replace=False)
             
-            # modify trait
-            new_trait = trait[0] + 'm'
+            # check whether trait exists in ai that can be modified with 'm'
+            # and don't exist yet
+            remaining_traits = []
+            for trait in ai:
+                new_trait = trait + 'm'
+                if new_trait not in ai:
+                    remaining_traits.append(trait)
+            
+            if remaining_traits == []:
+                continue
+            
+            trait = np.random.choice(remaining_traits, 1, replace=False)[0]
+            new_trait = trait + 'm'
             
             # utility is modified by adding value from N(0, 0.1) to
-            trait_utilities[new_trait] = trait_utilities[trait[0]] +\
+            trait_utilities[new_trait] = trait_utilities[trait] +\
                                                     np.random.normal(0, 0.1)
             
         # 4) evaluation step: is utility of trait greater than the mean
@@ -151,15 +160,17 @@ def run_simulation(rho1, rho2, rho3, judge, num_iter=500):
         
         # how good is the ai at evaluation? add noise from 0-0.1
         judgement_error = np.random.normal(0, 1-judge) / 10
+        
+        # average utility of existing traits
         mean_utility = np.mean(itemgetter(*ai)(trait_utilities)) 
         
         # add trait if better than mean utility
-        if (trait_utilities[new_trait[0]] + judgement_error) >= mean_utility:
+        if (trait_utilities[new_trait] + judgement_error) >= mean_utility:
             ai = np.append(ai, new_trait)
             
         # add to cultural_complexity over time
-        cultural_complexity[i, :] = get_complexity(ai, trait_utilities)
+        ai_complexity[i, :] = get_complexity(ai, trait_utilities)
         
         i += 1
             
-    return cultural_complexity
+    return ai_complexity
