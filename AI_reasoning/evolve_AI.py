@@ -44,7 +44,7 @@ def sigmoid(x):
       return 1 / (1 + math.exp(-x))
     
 # simulation 
-def run_simulation(rho1, rho2, rho3, judge, num_iter=500):
+def run_simulation(rho1, rho2, rho3, judge, reason, num_iter=500):
     """Cultural evolution simulation. Starts with two (out of ten) seed traits, allows
     new traits to be introduced through novel invention (rho1), combination 
     of existing traits (rho2), and modification of existing traits (rho3). The
@@ -55,12 +55,13 @@ def run_simulation(rho1, rho2, rho3, judge, num_iter=500):
         rho1 (_type_): probability of introducing a new seed trait through novel invention
         rho2 (_type_): probability of combining two existing traits to produce a new trait
         rho3 (_type_): probability of modifying an existing trait to produce a new variant
-        rho4 (_type_): quality of evaluation from 0 to 1 (1 is best).
-        num_iter (int, optional): Iterations. The last 20% are averaged over
+        judge (_type_): quality of evaluation from 0 to 1 (1 is best).
+        reason (_type_): transmission fidelity of reasoning from 0 to 1 (1 is best).
+        num_iter (int, optional): Number of iterations. 
         to calculate complexity. Defaults to 500.
 
     Returns:
-        np.array: mean of 5 complexity measures over the last 20% of iterations.
+        np.array: 10 complexity measures per iteration.
     """
     # make np array containing the 10 first letters of the alphabet
     # these are the seed traits
@@ -127,9 +128,11 @@ def run_simulation(rho1, rho2, rho3, judge, num_iter=500):
             new_trait = trait_1[0] + trait_2[0]
             
             # calculate utility of new trait by taking maximum among seed traits
-            # and adding value from N(0, 0.1)
+            # and adding value based on reasoning capability
             utils = itemgetter(trait_1[0], trait_2[0])(trait_utilities)
-            new_util = np.max(utils) + np.random.normal(0, 0.1)
+            added_mean = (reason - 0.5)
+            added_sd = 0.1 + np.abs(added_mean/2)
+            new_util = np.max(utils) + np.random.normal(added_mean, added_sd)
             
             # add to trait_utilities
             trait_utilities[new_trait] = new_util
@@ -151,28 +154,32 @@ def run_simulation(rho1, rho2, rho3, judge, num_iter=500):
             trait = np.random.choice(remaining_traits, 1, replace=False)[0]
             new_trait = trait + 'm'
             
-            # utility is modified by adding value from N(0, 0.1) to
-            trait_utilities[new_trait] = trait_utilities[trait] +\
-                                                    np.random.normal(0, 0.1)
+             # utility is modified by adding value from N(0, 0.1) to
+            added_mean = (reason - 0.5)
+            added_sd = 0.1 + np.abs(added_mean/2)
+            new_util = trait_utilities[trait] + np.random.normal(added_mean, added_sd)
+            
+             # add to trait_utilities
+            trait_utilities[new_trait] = new_util
             
         # 4) evaluation step: is utility of trait greater than the mean
         # utility of the traits in ai?
         
-        # how good is the ai at evaluation? add noise from 0-0.1
-        judgement_error = np.random.normal(0, 0.5 * (1-judge)) 
-        
         # average utility of existing traits
         mean_utility = np.mean(itemgetter(*ai)(trait_utilities)) 
         
+        if not 'new_trait' in locals():
+            print(ai, trait_utilities, r)
+            
         # add trait if better than mean utility
         if (trait_utilities[new_trait]) >= mean_utility:
-            # chance that new trait is added to ai is judge
+            # chance that new trait is added to ai is judge (0 = bad, 1 = good)
             if np.random.random() < judge:
                 ai = np.append(ai, new_trait)
     
          # if trait is worse than mean utility
         else:
-            # chance that new trait is added to ai 
+            # chance that new trait is added to ai when utility low
             if np.random.random() > judge:
                 ai = np.append(ai, new_trait)
             
