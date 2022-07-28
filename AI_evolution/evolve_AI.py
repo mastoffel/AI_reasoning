@@ -17,23 +17,6 @@ from operator import itemgetter
 from sklearn.metrics import mean_absolute_error
 from AI_evolution.AI_complexity_measures import get_complexity
 
-# what happens in every iteration
-# 1) 
-# 2) 
-
-# 1) new seed trait is introduced through novel invention with probability rho1
-# 2) two of the cultural traits present are combined to produce a new cultural trait with probability rho2
-# 3) one of the cultural traits is modified to produce new variant of the trait with probability rho3
-# 4) one of the cultural traits is lost with probability rho4
-
-# all traits can be refined or combined with all other traits.
-# with the exception that composite traits cannot have the same seed trait.
-
-# simulation one: the four events are constrained so that rho1 + rho2 + rho3 + rho4 = 1
-# one of the four events must happen (assumed variable time between events)
-# running time is 5000 events
-# if number of traits in the group falls to zero, the next event
-# is a new seed trait introduced through novel invention
 
 # check intersection
 def has_intersection(a, b):
@@ -44,10 +27,12 @@ def sigmoid(x):
     
 # simulation 
 def run_simulation(rho1, rho2, rho3, judge, reason, num_iter=500):
-    """Cultural evolution simulation. Starts with two (out of ten) seed traits, allows
+    """AI evolution simulation. Starts with two (out of ten) seed traits, allows
     new traits to be introduced through novel invention (rho1), combination 
-    of existing traits (rho2), and modification of existing traits (rho3). The
-    loss rate or transmission fidelity (rho4) is assumed to be 1 - (rho1 + rho2 + rho3).
+    of existing traits (rho2), and modification of existing traits (rho3). Reason
+    determins whether new traits are more useful  than old ones, and judge determines
+    the capability of the AI to judge this and incorporate or not incorporate the
+    new trait.
     
 
     Args:
