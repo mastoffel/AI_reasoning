@@ -23,14 +23,15 @@ p1 <- df %>%
   ggplot(aes(iter, c10)) +
   geom_line(size = 0.01, alpha = 0.3) + # 
   theme_simple(axis_lines = TRUE, grid_lines = FALSE) +
-  facet_grid(judge ~ reason, 
+  facet_grid(judge ~ reason,
              labeller = labeller(.rows = label_both, .cols = label_both)) +
   scale_x_continuous(breaks = c(100, 300, 500)) +
   #scale_y_continuous(breaks = c(1, 5, 10)) +
-  #scale_y_log10() +
+  scale_y_log10(breaks = c(0.01, 1, 100, 10000),
+                labels = c("0.01", "1", "100", "10000")) +
   ylab("Mean utility over traits") +
   xlab("Iteration")
-p1
+#p1
 
-ggsave("AI_evolution/figs/AI_evo_utility.jpg", width = 6, height = 5)
+ggsave("AI_evolution/figs/AI_evo_utility_reinv.jpg", width = 6, height = 5)
 

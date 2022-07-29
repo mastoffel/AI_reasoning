@@ -1,8 +1,11 @@
+# cultural evolution inspired AI simulation 
+
 import itertools
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
+
 from sklearn.decomposition import PCA
 from tqdm import tqdm
 from AI_evolution.evolve_AI import run_simulation    
@@ -20,29 +23,21 @@ par_combs = np.array(list(itertools.product(rho1_range, rho2_range,
                                             rho3_range, judge_range,
                                             reason_range)))  
 
-# get subset where rho1 is 0.4, rho2 is 0.3 and rho3 is 0.3
-# par_combs_sub = par_combs[(par_combs[:,0] == 0.4) & \
-#                                 (par_combs[:,1] == 0.3) & \
-#                                 (par_combs[:,2] == 0.3)]
-
-
-# get subset where rho1-rho3 sum up to 1
+# get subset where rho1-rho3 sum up to 1 to that one action happens in 
+# every iteration
 par_combs_sub = par_combs[(par_combs[:,0] + par_combs[:,1] + par_combs[:,2] == 1)]
 
-# replicate each ai simulation 10 times
+# run 10 replicates for each parameter combination
 all_pars = np.repeat(par_combs_sub, 10, axis=0)
 
 # add identifier from 1 to len(all_pars) to each row 
 all_pars = np.hstack((np.arange(1, len(all_pars)+1).reshape(-1,1), all_pars))
 
-
-# run simulation for each combination to get cultural complexities
-# 10 complexity measures are calculated
+# run simulation and calculate complexity for each parameter combination    
 num_iter = 500
 ai_complex = np.zeros(shape = (num_iter * len(all_pars), 10 + all_pars.shape[1] + 1))
 
 for i in tqdm(range(len(all_pars))):
-    
     sim, reason = run_simulation(rho1 = all_pars[i, 1],
                                         rho2 = all_pars[i, 2],
                                         rho3 = all_pars[i, 3],
@@ -50,7 +45,6 @@ for i in tqdm(range(len(all_pars))):
                                         reason = all_pars[i, 5],
                                         reinvest=True,
                                         num_iter=num_iter)
-    
     # replicate all_pars[i] num_iter times
     pars = np.tile(all_pars[i], num_iter).reshape(num_iter, all_pars.shape[1])
     # add column for iteration number as integer
