@@ -43,11 +43,12 @@ ai_complex = np.zeros(shape = (num_iter * len(all_pars), 10 + all_pars.shape[1] 
 
 for i in tqdm(range(len(all_pars))):
     
-    sim = run_simulation(rho1 = all_pars[i, 1],
+    sim, reason = run_simulation(rho1 = all_pars[i, 1],
                                         rho2 = all_pars[i, 2],
                                         rho3 = all_pars[i, 3],
                                         judge = all_pars[i, 4],
                                         reason = all_pars[i, 5],
+                                        reinvest=True,
                                         num_iter=num_iter)
     
     # replicate all_pars[i] num_iter times
@@ -65,6 +66,6 @@ ai_complex_df = pd.DataFrame(ai_complex, columns=['sim_id', 'rho1', 'rho2', 'rho
                                                   'c6', 'c7', 'c8', 'c9', 'c10'])
 
 # savee ai_complex_df to csv
-ai_complex_df.to_csv('AI_evolution/output/ai_complex_df.csv', index=False)
+ai_complex_df.to_csv('AI_evolution/output/ai_complex_df_rec.csv', index=False)
 
 
