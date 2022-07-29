@@ -4,4 +4,4 @@ __pycache__/
 /AI_evolution/output/ai_complex_df.csv
 .Rhistory
 *.Rproj
-/AI_evolution/output/*
+/AI_evolution/output/ai_complex_df_rec.csv
