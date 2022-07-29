@@ -3,4 +3,5 @@ __pycache__/
 .DS_Store
 .Rhistory
 *.Rproj
+AI_evolution/output/
 output/
