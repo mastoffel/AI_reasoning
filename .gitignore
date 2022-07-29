@@ -1,7 +1,6 @@
 __pycache__/
 .Rproj.user
 .DS_Store
-/AI_evolution/output/ai_complex_df.csv
 .Rhistory
 *.Rproj
 output/
