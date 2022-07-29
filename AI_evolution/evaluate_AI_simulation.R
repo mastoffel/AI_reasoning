@@ -31,7 +31,6 @@ p1 <- df %>%
                 labels = c("0.01", "1", "100", "10000")) +
   ylab("Mean utility over traits") +
   xlab("Iteration")
-#p1
+# p1
 
 ggsave("AI_evolution/figs/AI_evo_utility_reinv.jpg", width = 6, height = 5)
-
